@@ -1,1 +1,1 @@
-VS Code workspace for Design and Analysis of Algorithms (CSC321)
+VS Code workspace for Sophomore Lab in Building A Search Engine (CSC299)
