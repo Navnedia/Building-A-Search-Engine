@@ -1,0 +1,155 @@
+import abc
+import dataclasses
+import __future__
+from abc import ABC
+from typing import *
+
+@dataclasses.dataclass
+class InputDocument:
+    """
+    Common raw document representation as produced by Text Aquisition stage.
+
+    This representation is stored in the DocumentCollection.
+    """
+    doc_id: str
+    text: str
+
+
+@dataclasses.dataclass
+class TransformedDocument:
+    """
+    Document representation after the Text Transformation stage.
+
+    This representation is the input to the Indexing stage.
+    """
+    doc_id: str
+    tokens: List[str]
+
+
+class DocumentCollection(ABC):
+    """
+    Collection of InputDocuments.
+
+    Abstracts Document Data Store.
+    Produced and updated by the indexing process.
+    Used by Query Process for User Interactions.
+    """
+    @abc.abstractmethod
+    def get_doc(self, doc_id: str) -> InputDocument:
+        """
+        Get a document by document id
+        :param doc_id: Id of the document to return
+        :return: InputDocument with the given doc_id
+        """
+        pass
+
+    @abc.abstractmethod
+    def get_docs(self, doc_ids: Iterable[str]) -> 'DocumentCollection':
+        """
+        Batch get.
+        :param doc_ids: Ids of the documents to retrieve
+        :return: A collection of documents with the given ids.
+        """
+        pass
+
+    @abc.abstractmethod
+    def __iter__(self) -> Iterator[InputDocument]:
+        """
+        :return: Iterator over all documents in the collection.
+        """
+        pass
+
+
+class DocumentSource(ABC):
+    """
+    Text Aquisition component of the Indexing Process.
+
+    This can be a feed or a crawled source, though the current interface reads all documents
+    at the same time (i.e..
+    """
+    @abc.abstractmethod
+    def read(self) -> DocumentCollection:
+        """
+        Get documents from this source.
+        :return: The DocumentCollection of all documents from this source.
+        """
+        pass
+
+
+class DocumentTransformer(ABC):
+    """
+    Text Transformation component of the Index Process.
+
+    Text normalization and tokenization is expected to be part of this component.
+    """
+    @abc.abstractmethod
+    def transform_document(self, doc: InputDocument) -> TransformedDocument:
+        pass
+
+
+class Index(ABC):
+    """
+    Index thaat is the final output of the Indexing Process and the main source for Query Process.
+    """
+    @abc.abstractmethod
+    def add_document(self, doc: TransformedDocument) -> None:
+        pass
+
+
+class Indexer(ABC):
+    """
+    Factory class for Index
+    """
+    @abc.abstractmethod
+    def create_index(self) -> Index:
+        pass
+
+
+class NaiveSearchDocumentTransformer(DocumentTransformer):
+    """
+    An DocumentTransformer implementation that runs the supplied tokenizer.
+    """
+    def __init__(self, tokenizer):
+        """
+        :param tokenizer: A tokenizer instance that will be used in document transformation.
+        """
+        self.tokenizer = tokenizer
+
+    def transform_document(self, doc: InputDocument) -> TransformedDocument:
+        """
+        Creates TransformedDocument from the given InputDocument by tokenizing its text.
+
+        Uses the tokenizer instance supplied in the constructor.
+        :param doc: The InputDocument to be transformed.
+        :return: The transformed document
+        """
+        return NaiveTransformedDocument(doc_id=doc.doc_id, tokens=tokenizer.tokenize(doc.get_text()))
+
+
+class DefaultIndexingProcess:
+    """
+    Simple implementation of the indexing prorocess.
+
+    This class runs components of the indexing process supplied to it either in the constructor
+    or in the arguments to the |run| function below.
+    """
+    def __init__(self, document_transformer: DocumentTransformer, indexer: Indexer):
+        self.document_transformer = document_transformer
+        self.indexer = indexer
+
+    def run(self, source: DocumentSource) -> Index:
+        """
+        Runs the Indexing Process using the supplied components.
+        :param source: Source of documents to index.
+        :return: An index used to search documents from the given source.
+        """
+        # Run the aquisition stage, or just load the results of that stage. Enable iteration over
+        # all documents from the given source.
+        document_collection = source.read()
+        # Create an empty index. Documents will be added one at a time.
+        index = self.indexer.create_index()
+        for doc in document_collection:
+            # Tansform and index the document.
+            transformed_doc = self.document_transformer.transform_document(doc)
+            index.add_document(transformed_doc)
+        return index
