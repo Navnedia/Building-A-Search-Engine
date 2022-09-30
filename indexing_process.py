@@ -4,10 +4,11 @@ import __future__
 from abc import ABC
 from typing import *
 
+
 @dataclasses.dataclass
 class InputDocument:
     """
-    Common raw document representation as produced by Text Aquisition stage.
+    Common raw document representation as produced by Text Acquisition stage.
 
     This representation is stored in the DocumentCollection.
     """
@@ -62,7 +63,7 @@ class DocumentCollection(ABC):
 
 class DocumentSource(ABC):
     """
-    Text Aquisition component of the Indexing Process.
+    Text Acquisition component of the Indexing Process.
 
     This can be a feed or a crawled source, though the current interface reads all documents
     at the same time (i.e..
@@ -87,12 +88,26 @@ class DocumentTransformer(ABC):
         pass
 
 
+@dataclasses.dataclass
+class Query:
+    tokens: List[str]
+
+
+@dataclasses.dataclass
+class SearchResults:
+    doc_ids: List[str]
+
+
 class Index(ABC):
     """
-    Index thaat is the final output of the Indexing Process and the main source for Query Process.
+    Index that is the final output of the Indexing Process and the main source for Query Process.
     """
     @abc.abstractmethod
     def add_document(self, doc: TransformedDocument) -> None:
+        pass
+
+    @abc.abstractmethod
+    def search(self, query: Query) -> SearchResults:
         pass
 
 
@@ -128,7 +143,7 @@ class NaiveSearchDocumentTransformer(DocumentTransformer):
 
 class DefaultIndexingProcess:
     """
-    Simple implementation of the indexing prorocess.
+    Simple implementation of the indexing process.
 
     This class runs components of the indexing process supplied to it either in the constructor
     or in the arguments to the |run| function below.
@@ -143,13 +158,13 @@ class DefaultIndexingProcess:
         :param source: Source of documents to index.
         :return: An index used to search documents from the given source.
         """
-        # Run the aquisition stage, or just load the results of that stage. Enable iteration over
+        # Run the acquisition stage, or just load the results of that stage. Enable iteration over
         # all documents from the given source.
         document_collection = source.read()
         # Create an empty index. Documents will be added one at a time.
         index = self.indexer.create_index()
         for doc in document_collection:
-            # Tansform and index the document.
+            # Transform and index the document.
             transformed_doc = self.document_transformer.transform_document(doc)
             index.add_document(transformed_doc)
         return index
