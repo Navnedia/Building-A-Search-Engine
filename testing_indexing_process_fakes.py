@@ -1,5 +1,6 @@
 from indexing_process import *
 
+
 class FakeDocumentCollection(DocumentCollection):
     def __init__(self, docs: List[InputDocument]):
         self.docs = docs
@@ -8,14 +9,17 @@ class FakeDocumentCollection(DocumentCollection):
     def from_str_list(cls, docs: List[str]):
         return cls([InputDocument(doc_id=str(i), text=doc) for i, doc in enumerate(docs)])
 
-    def __iter__(self):
-        return self.docs.__iter__()
+    def insert(self, doc: InputDocument) -> None:
+        self.docs.append(doc)
 
     def get_doc(self, doc_id):
         return next((d for d in self.docs if d.doc_id == doc_id), None)
 
     def get_docs(self, doc_ids: Iterable[str]):
         return FakeDocumentCollection([d for d in self.docs if d.doc_id in doc_ids])
+
+    def __iter__(self):
+        return self.docs.__iter__()
 
 
 class FakeDocumentSource(DocumentSource):

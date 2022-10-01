@@ -35,12 +35,24 @@ class DocumentCollection(ABC):
     Produced and updated by the indexing process.
     Used by Query Process for User Interactions.
     """
+
+    @abc.abstractmethod
+    def insert(self, doc: InputDocument) -> None:
+        """
+        Add a document into the document collection.
+
+        :param doc: An InputDocument to add to the collection
+        :return: None
+        """
+        pass
+
     @abc.abstractmethod
     def get_doc(self, doc_id: str) -> InputDocument:
         """
-        Get a document by document id
-        :param doc_id: Id of the document to return
-        :return: InputDocument with the given doc_id
+        Get a document by document ID.
+
+        :param doc_id: ID of the document to return
+        :return: An InputDocument for the given doc_id
         """
         pass
 
@@ -48,15 +60,16 @@ class DocumentCollection(ABC):
     def get_docs(self, doc_ids: Iterable[str]) -> 'DocumentCollection':
         """
         Batch get.
-        :param doc_ids: Ids of the documents to retrieve
-        :return: A collection of documents with the given ids.
+
+        :param doc_ids: IDs of the documents to retrieve
+        :return: A collection of documents with the given IDs.
         """
         pass
 
     @abc.abstractmethod
     def __iter__(self) -> Iterator[InputDocument]:
         """
-        :return: Iterator over all documents in the collection.
+        :return: Iterator over all documents in the collection
         """
         pass
 
@@ -68,10 +81,12 @@ class DocumentSource(ABC):
     This can be a feed or a crawled source, though the current interface reads all documents
     at the same time (i.e..
     """
+
     @abc.abstractmethod
     def read(self) -> DocumentCollection:
         """
         Get documents from this source.
+
         :return: The DocumentCollection of all documents from this source.
         """
         pass
@@ -83,6 +98,7 @@ class DocumentTransformer(ABC):
 
     Text normalization and tokenization is expected to be part of this component.
     """
+
     @abc.abstractmethod
     def transform_document(self, doc: InputDocument) -> TransformedDocument:
         pass
@@ -102,6 +118,7 @@ class Index(ABC):
     """
     Index that is the final output of the Indexing Process and the main source for Query Process.
     """
+
     @abc.abstractmethod
     def add_document(self, doc: TransformedDocument) -> None:
         pass
@@ -115,6 +132,7 @@ class Indexer(ABC):
     """
     Factory class for Index
     """
+
     @abc.abstractmethod
     def create_index(self) -> Index:
         pass
@@ -124,6 +142,7 @@ class NaiveSearchDocumentTransformer(DocumentTransformer):
     """
     An DocumentTransformer implementation that runs the supplied tokenizer.
     """
+
     def __init__(self, tokenizer):
         """
         :param tokenizer: A tokenizer instance that will be used in document transformation.
@@ -133,12 +152,12 @@ class NaiveSearchDocumentTransformer(DocumentTransformer):
     def transform_document(self, doc: InputDocument) -> TransformedDocument:
         """
         Creates TransformedDocument from the given InputDocument by tokenizing its text.
-
         Uses the tokenizer instance supplied in the constructor.
+
         :param doc: The InputDocument to be transformed.
         :return: The transformed document
         """
-        return NaiveTransformedDocument(doc_id=doc.doc_id, tokens=tokenizer.tokenize(doc.get_text()))
+        return NaiveTransformedDocument(doc_id=doc.doc_id, tokens=self.tokenizer.tokenize(doc.text))
 
 
 class DefaultIndexingProcess:
@@ -148,6 +167,7 @@ class DefaultIndexingProcess:
     This class runs components of the indexing process supplied to it either in the constructor
     or in the arguments to the |run| function below.
     """
+
     def __init__(self, document_transformer: DocumentTransformer, indexer: Indexer):
         self.document_transformer = document_transformer
         self.indexer = indexer
@@ -155,6 +175,7 @@ class DefaultIndexingProcess:
     def run(self, source: DocumentSource) -> Index:
         """
         Runs the Indexing Process using the supplied components.
+
         :param source: Source of documents to index.
         :return: An index used to search documents from the given source.
         """
