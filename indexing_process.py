@@ -138,6 +138,32 @@ class Indexer(ABC):
         pass
 
 
+class DictDocumentCollection(DocumentCollection):
+    """
+    A DocumentCollection implementation that operates using a dictionary.
+    """
+
+    def __init__(self):
+        self.documents = {}
+
+    def insert(self, doc: InputDocument) -> None:
+        if isinstance(doc, InputDocument):
+            self.documents[doc.doc_id] = doc
+
+    def get_doc(self, doc_id: str) -> InputDocument:
+        return self.documents.get(doc_id)
+
+    def get_docs(self, doc_ids: Iterable[str]) -> 'DocumentCollection':
+        doc_collection = DictDocumentCollection()
+        for requested_id in doc_ids:
+            doc_collection.insert(self.documents.get(requested_id))
+
+        return doc_collection
+
+    def __iter__(self) -> Iterator[InputDocument]:
+        return iter(self.documents.values())
+
+
 class NaiveSearchDocumentTransformer(DocumentTransformer):
     """
     An DocumentTransformer implementation that runs the supplied tokenizer.
