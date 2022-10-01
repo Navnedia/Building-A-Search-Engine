@@ -3,6 +3,7 @@ from abc import ABC
 import dataclasses
 import __future__
 from typing import *
+import json
 
 
 @dataclasses.dataclass
@@ -163,6 +164,28 @@ class DictDocumentCollection(DocumentCollection):
 
     def __iter__(self) -> Iterator[InputDocument]:
         return iter(self.documents.values())
+
+
+class WikiJsonDocumentSource(DocumentSource):
+    def __init__(self, file_path: str):
+        """
+        A DocumentSource implementation that uses JSON files to read in the data and build
+        a collection of documents.
+
+        :param file_path: The string path and name of the JSON file
+        """
+        self.file_path = file_path
+
+    def read(self) -> DocumentCollection:
+        with open(self.file_path) as fp:  # Open raw json file and load contents.
+            records = json.load(fp)
+        # For every record in the file, construct an InputDocument with the raw text and
+        # add it to the document collection.
+        doc_collection = DictDocumentCollection()  # Create the new document collection.
+        for record in records:
+            doc_collection.insert(InputDocument(record['id'], record['init_text']))
+
+        return doc_collection
 
 
 class NaiveSearchDocumentTransformer(DocumentTransformer):
