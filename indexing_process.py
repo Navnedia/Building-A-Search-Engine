@@ -1,7 +1,7 @@
 import abc
+from abc import ABC
 import dataclasses
 import __future__
-from abc import ABC
 from typing import *
 
 
@@ -147,15 +147,16 @@ class DictDocumentCollection(DocumentCollection):
         self.documents = {}
 
     def insert(self, doc: InputDocument) -> None:
+        # If the input is an instance of InputDocument, then add it to the dictionary with the id as the key.
         if isinstance(doc, InputDocument):
             self.documents[doc.doc_id] = doc
 
-    def get_doc(self, doc_id: str) -> InputDocument:
-        return self.documents.get(doc_id)
+    def get_doc(self, doc_id: str) -> InputDocument | None:
+        return self.documents.get(doc_id)  # Return the InputDocument, or None if not found.
 
     def get_docs(self, doc_ids: Iterable[str]) -> 'DocumentCollection':
-        doc_collection = DictDocumentCollection()
-        for requested_id in doc_ids:
+        doc_collection = DictDocumentCollection()  # Create a new document collection.
+        for requested_id in doc_ids:  # For each of the requested ID's, add the document to the collection:
             doc_collection.insert(self.documents.get(requested_id))
 
         return doc_collection
@@ -165,12 +166,10 @@ class DictDocumentCollection(DocumentCollection):
 
 
 class NaiveSearchDocumentTransformer(DocumentTransformer):
-    """
-    An DocumentTransformer implementation that runs the supplied tokenizer.
-    """
-
     def __init__(self, tokenizer):
         """
+        A DocumentTransformer implementation that runs the supplied tokenizer.
+
         :param tokenizer: A tokenizer instance that will be used in document transformation.
         """
         self.tokenizer = tokenizer
@@ -214,4 +213,5 @@ class DefaultIndexingProcess:
             # Transform and index the document.
             transformed_doc = self.document_transformer.transform_document(doc)
             index.add_document(transformed_doc)
+
         return index
