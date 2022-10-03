@@ -94,6 +94,25 @@ class DocumentSource(ABC):
         pass
 
 
+class Tokenizer(ABC):
+    """
+    A utility class interface for processing text into tokens for searching.
+    This class abstracts the tokenization process to allow for different implementations
+    and parameters.
+    """
+
+    @staticmethod
+    @abc.abstractmethod
+    def tokenize(data: str) -> List[str]:
+        """
+        Processes the raw string input by splitting it into tokens.
+
+        :param data: The raw text string to break into separate tokens
+        :return: A list strings containing the original text separated into tokens
+        """
+        pass
+
+
 class DocumentTransformer(ABC):
     """
     Text Transformation component of the Index Process.
@@ -104,16 +123,6 @@ class DocumentTransformer(ABC):
     @abc.abstractmethod
     def transform_document(self, doc: InputDocument) -> TransformedDocument:
         pass
-
-
-@dataclasses.dataclass
-class Query:
-    tokens: List[str]
-
-
-@dataclasses.dataclass
-class SearchResults:
-    doc_ids: List[str]
 
 
 class Index(ABC):
@@ -140,23 +149,14 @@ class Indexer(ABC):
         pass
 
 
-class Tokenizer(ABC):
-    """
-    A utility class interface for processing text into tokens for searching.
-    This class abstracts the tokenization process to allow for different implementations
-    and parameters.
-    """
+@dataclasses.dataclass
+class Query:
+    tokens: List[str]
 
-    @staticmethod
-    @abc.abstractmethod
-    def tokenize(data: str) -> List[str]:
-        """
-        Processes the raw string input by splitting it into tokens.
 
-        :param data: The raw text string to break into separate tokens
-        :return: A list strings containing the original text separated into tokens
-        """
-        pass
+@dataclasses.dataclass
+class SearchResults:
+    doc_ids: List[str]
 
 
 class DictDocumentCollection(DocumentCollection):
@@ -242,7 +242,7 @@ class NaiveSearchDocumentTransformer(DocumentTransformer):
         :param doc: The InputDocument to be transformed.
         :return: The transformed document
         """
-        return NaiveTransformedDocument(doc_id=doc.doc_id, tokens=self.tokenizer.tokenize(doc.text))
+        return TransformedDocument(doc_id=doc.doc_id, tokens=self.tokenizer.tokenize(doc.text))
 
 
 class DefaultIndexingProcess:
