@@ -33,16 +33,3 @@ class FakeDocumentSource(DocumentSource):
 class FakeDocumentTransformer(DocumentTransformer):
     def transform_document(self, doc: InputDocument) -> TransformedDocument:
         return TransformedDocument(doc.doc_id, doc.text.split())
-
-
-class FakeIndex(Index):
-    def __init__(self):
-        self.docs = []
-
-    def add_document(self, doc: TransformedDocument) -> None:
-        self.docs.append(doc)
-
-
-class FakeIndexer(Indexer):
-    def create_index(self) -> Index:
-        return FakeIndex()

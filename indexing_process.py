@@ -1,6 +1,7 @@
 import abc
 from abc import ABC
 import dataclasses
+from dataclasses import asdict
 import __future__
 from typing import *
 import json
@@ -125,30 +126,6 @@ class DocumentTransformer(ABC):
         pass
 
 
-class Index(ABC):
-    """
-    Index that is the final output of the Indexing Process and the main source for Query Process.
-    """
-
-    @abc.abstractmethod
-    def add_document(self, doc: TransformedDocument) -> None:
-        pass
-
-    @abc.abstractmethod
-    def search(self, query: Query) -> SearchResults:
-        pass
-
-
-class Indexer(ABC):
-    """
-    Factory class for Index
-    """
-
-    @abc.abstractmethod
-    def create_index(self) -> Index:
-        pass
-
-
 @dataclasses.dataclass
 class Query:
     tokens: List[str]
@@ -159,10 +136,51 @@ class SearchResults:
     doc_ids: List[str]
 
 
+class Index(ABC):
+    """
+    Index that is the final output of the Indexing Process and the main source for Query Process.
+    """
+
+    @abc.abstractmethod
+    def add_document(self, doc: TransformedDocument) -> None:
+        """
+        Add a new transformed document to be saved in the index.
+
+        :param doc: A TransformedDocument to add to the index
+        :return: None
+        """
+        pass
+
+    @abc.abstractmethod
+    def search(self, query: Query) -> SearchResults:
+        pass
+
+    @abc.abstractmethod
+    def read(self):
+        """Read in data from the file_path specified in the index class constructor."""
+        pass
+
+    @abc.abstractmethod
+    def write(self):
+        """Write out data to the file_path specified in the index class constructor."""
+        pass
+
+
+class Indexer(ABC):
+    """Factory class for Index"""
+
+    @abc.abstractmethod
+    def create_index(self) -> Index:
+        """
+        Creates a new Index class with the appropriate factory parameters
+
+        :return: An instance of an Index class created with the supplied parameters.
+        """
+        pass
+
+
 class DictDocumentCollection(DocumentCollection):
-    """
-    A DocumentCollection implementation that operates using a dictionary.
-    """
+    """A DocumentCollection implementation that operates using a dictionary."""
 
     def __init__(self):
         self.documents = {}
@@ -243,6 +261,51 @@ class NaiveSearchDocumentTransformer(DocumentTransformer):
         :return: The transformed document
         """
         return TransformedDocument(doc_id=doc.doc_id, tokens=self.tokenizer.tokenize(doc.text))
+
+
+class NaiveIndex(Index):
+    def __init__(self, file_path: str):
+        """
+        Index that is the final output of the Indexing Process and the main source for Query Process.
+
+        A Naive implementation of index.
+
+        :param file_path: The string path and name of the JSON file to read and write the index to.
+        """
+        self.docs = []
+        self.file_path = file_path
+
+    def add_document(self, doc: TransformedDocument) -> None:
+        self.docs.append(doc)
+
+    def search(self, query: Query) -> SearchResults:
+        pass
+
+    def read(self):
+        with open(self.file_path, 'r') as fp:  # Open the index file and read in data:
+            index_records = json.load(fp)
+        # For each document in the records, construct a TransformedDocument obj and add it to the list:
+        for document in index_records:
+            self.docs.append(TransformedDocument(doc_id=document['doc_id'], tokens=document['tokens']))
+
+    def write(self):
+        # Create a new list converting the TransformedDocuments to dictionaries.
+        dict_docs = [asdict(document) for document in self.docs]
+        with open(self.file_path, 'w') as fp:  # Open the index file and write out data:
+            json.dump(dict_docs, fp)
+
+
+class NaiveIndexer(Indexer):
+    def __init__(self, file_path: str):
+        """
+        A Factory class for NaiveIndex
+
+        :param file_path: The string path and name of the JSON file for indexes to read and write to.
+        """
+        self.file_path = file_path
+
+    def create_index(self) -> Index:
+        return NaiveIndex(self.file_path)
 
 
 class DefaultIndexingProcess:
