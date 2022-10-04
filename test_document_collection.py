@@ -1,44 +1,43 @@
 from indexing_process import *
-from testing_indexing_process_fakes import *
 from unittest import TestCase
 
 
 class TestDictDocumentCollection(TestCase):
-    def test_dict_doc_collection(self):
-        fake_collection = FakeDocumentCollection.from_str_list(['d1', 'd2'])
+    def test_get_doc(self):
+        test_docs = [InputDocument('0', 'd1'), InputDocument('1', 'd2'), InputDocument('2', 'd3')]
         dict_collection = DictDocumentCollection()
-        dict_collection.insert(InputDocument('0', 'd1'))
-        dict_collection.insert(InputDocument('1', 'd2'))
-        self.assertEqual(dict_collection.get_doc('0'), fake_collection.get_doc('0'))
-        self.assertEqual(dict_collection.get_doc('1'), fake_collection.get_doc('1'))
-
-    def test_insert_none(self):
-        dist_collection = DictDocumentCollection()
-        dist_collection.insert(None)
-        self.assertEqual(dist_collection.documents, {})
-
-    def test_get_doc_none(self):
-        self.assertIsNone(DictDocumentCollection().get_doc('invalid_id'))
+        for doc in test_docs:  # Insert and check for test documents:
+            dict_collection.insert(doc)
+            self.assertEqual(dict_collection.get_doc(doc.doc_id), doc)
 
     def test_get_batch(self):
-        fake_collection = FakeDocumentCollection.from_str_list(['d1', 'd2', 'd3'])
+        test_docs = [InputDocument('0', 'd1'), InputDocument('1', 'd2'), InputDocument('2', 'd3')]
         dict_collection = DictDocumentCollection()
-        dict_collection.insert(InputDocument('0', 'd1'))
-        dict_collection.insert(InputDocument('1', 'd2'))
-        dict_collection.insert(InputDocument('2', 'd3'))
-        sub_collection = dict_collection.get_docs(['0', '2', '4'])
-        self.assertIsInstance(sub_collection, DictDocumentCollection)
-        self.assertEqual(sub_collection.get_doc('0'), fake_collection.get_doc('0'))
-        self.assertEqual(sub_collection.get_doc('1'), None)
-        self.assertEqual(sub_collection.get_doc('2'), fake_collection.get_doc('2'))
-        self.assertEqual(sub_collection.get_doc('4'), None)
+        for doc in test_docs:  # Insert test documents:
+            dict_collection.insert(doc)
+
+        sub_collection = dict_collection.get_docs(['0', '2', '4'])  # Get a subset of the documents.
+        self.assertIsInstance(sub_collection, DictDocumentCollection)  # Test the return type is another document collection.
+        # Make sure only the correct documents are in the collection:
+        self.assertEqual(sub_collection.documents, {
+            '0': InputDocument('0', 'd1'),
+            '2': InputDocument('2', 'd3')})
+
+    def test_invalid(self):
+        dict_collection = DictDocumentCollection()
+        dict_collection.insert('fake')
+        dict_collection.insert(None)
+        self.assertEqual(dict_collection.documents, {})  # Make sure nothing was added above.
+        self.assertIsNone(dict_collection.get_doc('invalid_id'))  # An Invalid id should return None.
 
     def test_iterator(self):
         dict_collection = DictDocumentCollection()
         dict_collection.insert(InputDocument('0', 'd1'))
         dict_collection.insert(InputDocument('1', 'd2'))
         dict_collection.insert(None)
-        collection_iter = dict_collection.__iter__()
+
+        collection_iter = dict_collection.__iter__()  # Get iterator.
+        # Check that the function returned an iterator.
         self.assertIsInstance(collection_iter, Iterator, 'Did not return Iterator')
-        for item in collection_iter:
+        for item in collection_iter:  # Make sure the type of each item is InputDocument:
             self.assertIsInstance(item, InputDocument, 'Iterator item is not of type InputDocument')
