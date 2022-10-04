@@ -102,9 +102,8 @@ class Tokenizer(ABC):
     and parameters.
     """
 
-    @staticmethod
     @abc.abstractmethod
-    def tokenize(data: str) -> List[str]:
+    def tokenize(self, data: str) -> List[str]:
         """
         Processes the raw string input by splitting it into tokens.
 
@@ -235,8 +234,7 @@ class NaiveTokenizer(Tokenizer):
     and punctuation separated. Punctuation is NOT removed.
     """
 
-    @staticmethod
-    def tokenize(data: str) -> List[str]:
+    def tokenize(self, data: str) -> List[str]:
         tokens = re.sub(r'(\W)', r' \1 ', data.lower())  # Split off all non-word chars.
         tokens = re.sub(r'(\w+)\s(\')\s(\w+)', r'\1\2\3', tokens)  # Fix apostrophes in the middle of words by removing spaces from previous step.
         tokens = re.sub(r'\.\s+\.\s+\.', r' ...', tokens)  # When we see three periods separated by spaces, group them into one '...' ellipsis token.
@@ -338,3 +336,31 @@ class DefaultIndexingProcess:
             index.add_document(transformed_doc)
 
         return index
+
+
+def create_naive_indexing_process(indexer_file: str) -> DefaultIndexingProcess:
+    """
+    Creates an instance of DefaultIndexingProcess by incorporating the
+    naive indexing components (i.e, NaiveTokenizer, NaiveSearchDocumentTransformer, NaiveIndexer/NaiveIndex).
+
+    :param indexer_file: The JSON file name and path for the NaiveIndex to write to, or read from
+    :return: An instance of the DefaultIndexingProcess
+    """
+    doc_transformer = NaiveSearchDocumentTransformer(NaiveTokenizer())  # Construct a naive document transformer using the naive tokenizer.
+    indexer = NaiveIndexer(indexer_file)  # Create a naive index/indexer using the indexer file for reading and writing indexed data.
+    return DefaultIndexingProcess(doc_transformer, indexer)  # Return an indexing process using the naive components above.
+
+
+def run_naive_indexing_process(input_file: str, output_file: str) -> None:
+    """
+    Runs the naive indexing process on the input file and writes the indexed data
+    to the output file.
+
+    :param input_file: The JSON input file name and path to read/index
+    :param output_file: The JSON output file name and path to write indexed data to
+    :return: None
+    """
+    naive_indexing_process = create_naive_indexing_process(output_file)  # Get an instance of the indexing process using naive components.
+    wiki_source = WikiJsonDocumentSource(input_file)  # Create a document source pointing to the input json file.
+    index = naive_indexing_process.run(wiki_source)  # Run indexing process to build the index for the wiki source.
+    index.write()  # Write the indexed/Transformed data to the output file specified in the indexing process.
