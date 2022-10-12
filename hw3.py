@@ -124,10 +124,6 @@ def search_query(query: str, index: Dict[str, Set[int]]) -> Set[int]:
     """
     query_tokens = NaiveTokenizer().tokenize(query)
     token_matches = [index[token] for token in query_tokens]  # Get the index set for each token in the query.
-    # Take the intersection of all the query token matches:
-    search_results = token_matches[0]
-    for i in range(1, len(token_matches)):
-        # Intersection of the current token set, with all the previous intersections. Order doesn't matter.
-        search_results = token_matches[i].intersection(search_results)
-
-    return search_results
+    if not len(token_matches):  # If the token match sets is empty, then return an empty set.
+        return set()
+    return set.intersection(*token_matches)  # Take the intersection of all the query token matches.

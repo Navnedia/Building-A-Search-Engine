@@ -83,3 +83,5 @@ stopword1 stopword2
             {1, 3},
             hw3.search_query(
                 'b d e', index={'a': {0}, 'b': {0, 1, 3}, 'c': {0, 1, 2}, 'd': {1, 2, 3}, 'e': {1, 2, 3}}))
+        # Test empty:
+        self.assertEqual(set(), hw3.search_query('', index={'a': {0}, 'b': {0, 1, 3}, 'c': {0, 1, 2}}))
