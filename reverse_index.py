@@ -1,6 +1,12 @@
+import json
+from typing import List, Set
+
+from documents import InputDocument
+from index import Index
+from tokenizer import NaiveTokenizer
 
 
-def indexing_process(filename: str) -> indexing_process.Index:
+def indexing_process(filename: str) -> Index:
     with open(filename) as fp:
         data = json.load(fp)
     Input_docments = [InputDocument(doc['doc_id'], doc['init_text']) for doc in data]
@@ -14,7 +20,7 @@ def indexing_process(filename: str) -> indexing_process.Index:
 
 
 def search(query: str, documents: List[Set[str]]):
-    query_words = set(tokenize(query))
+    query_words = set(NaiveTokenizer.tokenize(query))
     match_count_dict = dict()
     for word in query_words:
         for i, doc in enumerate(documents):
