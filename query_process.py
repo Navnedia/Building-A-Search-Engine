@@ -1,51 +1,75 @@
 import abc
 from abc import ABC
-from indexing_process import Index, Query, SearchResults
-import dataclasses
+
+from search_api import Query, SearchResults
+from index import Index, NaiveIndex
+from tokenizer import Tokenizer, NaiveTokenizer
 
 
-class QueryProcessor(ABC):
+class QueryParser(ABC):
+    """
+    Responsible for converting the input query string entered by a user into the
+    structured Query representation.
+    """
+
     @abc.abstractmethod
-    def process_query(self, query_string: str) -> Query:
+    def process_query(self, query_str: str) -> Query:
+        """
+        Runs the QueryParser logic.
+
+        :param query_str: The input query string entered by the user.
+        :return: Structured Query representation to be used by search.
+        """
         pass
 
 
-class NaiveQueryProcessor(QueryProcessor):
-    """
-    A QueryProcessor implementation that runs the supplied tokenizer.
-    """
-    def __init__(self, tokenizer):
-        """
-        :param tokenizer:
-        """
-        self.tokenizer = tokenizer
-
-    def process_query(self, query_string: str) -> Query:
-        """
-
-        :param query_string:
-        :return:
-        """
-        return Query(tokens=self.tokenizer.tokenize(query_string))
-
-
 class ResultFormatter(ABC):
+    """
+    Abstract class responsible for presenting each result to the users.
+    """
+
     @abc.abstractmethod
     def format_results_for_display(self, results: SearchResults) -> str:
+        """
+        Takes SearchResults dataclass and outputs a string to be displayed to users.
+
+        :param results: Structured representation of search results containing the doc_ids.
+        :return: A human-readable string containing all the search results as they should be
+            displayed to users.
+        """
         pass
 
 
 class QueryProcess:
-    def __init__(self, query_processor: QueryProcessor, index: Index, result_formatter: ResultFormatter, logger: Logger):
-        self.query_processor = query_processor
+    """
+    Class responsible for running the whole query process.
+    """
+
+    def __init__(self, query_parser: QueryParser, index: Index, result_formatter: ResultFormatter):
+        """
+        Constructor taking all the necessary components to process queries.
+
+        :param query_parser: Specific implementation instance of a QueryParser.
+        :param index: Specific implementation instance of an Index with all the data necessary
+            to run a search.
+        :param result_formatter: Specific implementation instance of a ResultFormatter.
+        """
+        self.query_parser = query_parser
         self.index = index
         self.result_formatter = result_formatter
-        self.logger = logger
 
     def run(self, query_string: str) -> str:
-        query: Query = self.query_processor.process_query(query_string)
-        results: SearchResults = self.index.search(query)
-        output_str: str = self.result_formatter.format_results_for_display(results)
+        """
+        Runs the query process and format results for display using the components
+        specified in the constructor.
+
+        :param query_string: The query string taken from the user.
+        :return: A human-readable representation of search results displayed to the user.
+        """
+        query: Query = self.query_parser.process_query(query_string)  # Process the query into tokens.
+        results: SearchResults = self.index.search(query)  # Search the index for the query.
+        output_str: str = self.result_formatter.format_results_for_display(results)  # format results.
+
         return output_str
 
 
