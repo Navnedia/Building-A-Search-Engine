@@ -128,3 +128,17 @@ def search_query(query: str, index: Dict[str, Set[int]]) -> Set[int]:
     if not len(token_matches):  # If the token match sets is empty, then return an empty set.
         return set()
     return set.intersection(*token_matches)  # Take the intersection of all the query token matches.
+
+
+class JsonEncoderWithIterablesDefault(json.JSONEncoder):
+    """JSON serializer helper."""
+
+    def default(self, o):
+        try:
+            iterable = iter(o)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        #  Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, o)
