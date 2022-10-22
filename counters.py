@@ -3,7 +3,8 @@ import json
 from abc import ABC
 from collections import defaultdict, Counter
 from typing import Dict, List
-from indexing_process import NaiveTokenizer
+
+from tokenizer import NaiveTokenizer
 
 
 class TextCounter(ABC):

@@ -1,8 +1,9 @@
 import json
-from collections import Counter, defaultdict
-from counters import CounterBasedTextCounter, count_total_words
-from indexing_process import NaiveTokenizer
 from typing import List, Set, Tuple, Dict
+from collections import Counter, defaultdict
+
+from counters import CounterBasedTextCounter, count_total_words
+from tokenizer import NaiveTokenizer
 
 
 def get_small_wiki_text() -> List[str]:

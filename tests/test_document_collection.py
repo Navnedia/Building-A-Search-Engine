@@ -1,3 +1,6 @@
+from typing import Iterator
+
+from documents import DictDocumentCollection, InputDocument
 from indexing_process import *
 from unittest import TestCase
 

@@ -1,3 +1,6 @@
+from typing import List, Iterable
+
+from documents import DocumentCollection, InputDocument, TransformedDocument
 from indexing_process import *
 
 

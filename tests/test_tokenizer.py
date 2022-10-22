@@ -1,5 +1,5 @@
 from unittest import TestCase
-from indexing_process import NaiveTokenizer
+from tokenizer import NaiveTokenizer
 
 
 class TestNaiveTokenizer(TestCase):

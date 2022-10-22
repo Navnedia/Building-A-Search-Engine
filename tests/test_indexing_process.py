@@ -1,4 +1,3 @@
-from indexing_process import *
 from testing_indexing_process_fakes import *
 from unittest import TestCase
 
