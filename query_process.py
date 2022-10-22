@@ -1,4 +1,5 @@
 import abc
+import sys
 from abc import ABC
 
 from search_api import Query, SearchResults
@@ -38,6 +39,36 @@ class ResultFormatter(ABC):
             displayed to users.
         """
         pass
+
+
+class NaiveQueryParser(QueryParser):
+    """
+    A QueryProcessor implementation that runs the supplied Tokenizer.
+    """
+
+    def __init__(self, tokenizer: Tokenizer):
+        """
+        :param tokenizer: A Tokenizer instance that will be used in parse_query.
+        """
+        self.tokenizer = tokenizer
+
+    def process_query(self, query_str: str) -> Query:
+        """
+        Runs the tokenizer and wraps the output into a Query dataclass.
+
+        :param query_str: The input query string entered by the user.
+        :return: Query representation with tokenized query.
+        """
+        return Query(terms=self.tokenizer.tokenize(query_str))
+
+
+class NaiveResultFormatter(ResultFormatter):
+    """
+    Fake result formatter that just displays the doc_ids of the results.
+    """
+
+    def format_results_for_display(self, results: SearchResults) -> str:
+        return repr(results)
 
 
 class QueryProcess:
