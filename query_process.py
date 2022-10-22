@@ -104,7 +104,28 @@ class QueryProcess:
         return output_str
 
 
-def main():
-    process = QueryProcess(query_processor=NaiveQueryProcessor(NaiveTokenizer()), index=IndexImplementation(), result_formatter=ResultFormatterImplementation(), logger=LoggerImplementation())
-    # Get the query from the user somehow.
-    print(process.run(query_string=query))
+def main(index_filename: str) -> None:
+    """
+    Reads the index data from the provided file and runs an interactive search query
+    loop inside the console.
+
+    :param index_filename: The filename and path to read indexed data from.
+    :return:
+    """
+    index = NaiveIndex(index_filename)
+    index.read()  # Load indexed data from the file into memory.
+    # Initialize the QueryProcess using naive components:
+    process = QueryProcess(
+        query_parser=NaiveQueryParser(NaiveTokenizer()),
+        index=index,
+        result_formatter=NaiveResultFormatter())
+
+    # Continuously prompt user for a query and display the results:
+    query = input("Please enter a query:")
+    while query:
+        print(process.run(query))
+        query = input("Please enter a query:")
+
+
+if __name__ == "__main__":
+    main(index_filename=sys.argv[1])
