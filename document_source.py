@@ -29,7 +29,7 @@ class WikiJsonDocumentSource(DocumentSource):
         A DocumentSource implementation that uses JSON files formatted like wiki_small.json
         to read in the data and build a collection of documents.
 
-        :param file_path: The string path and name of the JSON file
+        :param file_path: The string path and name of the JSON file.
         """
         self.file_path = file_path
 
@@ -40,6 +40,28 @@ class WikiJsonDocumentSource(DocumentSource):
         # add it to the document collection.
         doc_collection = DictDocumentCollection()  # Create the new document collection.
         for record in data:
-            doc_collection.insert(InputDocument(record['id'], record['init_text']))
+            doc_collection.insert(InputDocument(doc_id=record['id'], text=record['init_text']))
+
+        return doc_collection
+
+
+class TrecCovidJsonlSource(DocumentSource):
+    def __init__(self, file_path: str):
+        """
+        A DocumentSource implementation that uses JSONL files formatted like corpus.jsonl
+        with a json record on each line of the file. This JSONL file is read in, and the
+        data is used build a collection of documents.
+
+        :param file_path: The string path and name of the JSONL file.
+        """
+        self.file_path = file_path
+
+    def read(self) -> DocumentCollection:
+        doc_collection = DictDocumentCollection()
+        with open(self.file_path, 'r') as fp:  # Open raw jsonl file and load contents.
+            # For each line of the file, parse the line as json, and add the record to the collection:
+            for line in fp:
+                record = json.loads(line)
+                doc_collection.insert(InputDocument(doc_id=record['_id'], text=record['text']))
 
         return doc_collection
