@@ -10,7 +10,7 @@ class Test(TestCase):
             hw3.compute_document_counts([
                 'a b c d',
                 'a b d',
-                'a e'
+                'a e a'
             ])
         )
 
