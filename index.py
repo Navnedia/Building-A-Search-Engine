@@ -215,3 +215,80 @@ class ListBasedInvertedIndexWithFrequencies(Index):
                               for doc_id, tf in self.term_to_doc_id_and_frequencies[term]]
                 }
                 fp.write(json.dumps(record) + '\n')
+
+
+class DictBasedInvertedIndexWithFrequencies(Index):
+    def __init__(self, file_path: str):
+        """
+        Index that is the final output of the Indexing Process and the main source for Query Process.
+
+        A Dictionary based implementation to speed up information writing & retrieval. Also includes
+        ordering results by TF-IDF.
+
+        :param file_path: The string path and name of the JSONL file to read and write the index to.
+        """
+        self.file_path = file_path
+        self.num_documents = 0  # Number of documents in the index.
+        # Inverted index dict mapping a term to a dictionary with doc_ids as keys, and frequencies as values.
+        # Ex: {'word1': {'f8dhg68': 0.013, 'ukj7sy6': 0.02,  'we34rh0': 0.01}, 'word2':  {'mk2gr52': 0.003}}
+        self.term_to_doc_id_and_frequencies = defaultdict(dict)
+        self.doc_counts = Counter()  # The number of documents each term occurs in. # CAN I USE COUNTER?!?!?!? I think so.
+
+    def add_document(self, doc: TransformedDocument) -> None:
+        self.num_documents += 1  # Update number of documents in index.
+        term_counts = Counter(doc.tokens)  # Number of term occurrences for this document.
+        for term, count in term_counts.items():  # For each unique term in the document:
+            self.doc_counts[term] += 1
+            # Add this doc_id and term frequency to the current terms inverted index entry.
+            self.term_to_doc_id_and_frequencies[term][doc.doc_id] = term_frequency(count, len(doc.tokens))
+
+    def search(self, query: Query) -> SearchResults:
+        # Get only the doc_ids that match ALL the terms in the query. Intersection of the
+        # keys in the dictionary of each term.
+        matches_all_terms = set.intersection(
+            *[set(self.term_to_doc_id_and_frequencies[term].keys()) for term in query.terms])
+        if len(matches_all_terms) == 0:  # If no documents include all the terms, then return an empty result.
+            return SearchResults([])
+
+        # Calculate the total query match score for each matching document:
+        match_scores = defaultdict(float)
+        for term in query.terms:
+            idf = inverse_document_frequency(self.doc_counts[term], self.num_documents)
+            # Calculate the TF-IDF for each matching document, and add it to the document query score.
+            for doc_id in matches_all_terms:
+                match_scores[doc_id] += self.term_to_doc_id_and_frequencies[term][doc_id] * idf
+        # Return SearchResults ordered by the TF-IDF total query score.
+        return SearchResults(sorted(match_scores.keys(), key=match_scores.get))
+
+    def read(self):
+        with open(self.file_path, 'r') as fp:
+            # Read the first line metadata and store the count of documents in the index.
+            self.num_documents = json.loads(fp.readline())['number_of_documents']
+            # Initialize empty index & count variables:
+            self.term_to_doc_id_and_frequencies = defaultdict(dict)
+            self.doc_counts = Counter()
+
+            for line in fp:  # For each line, load the record into memory.
+                record = json.loads(line)
+                term = record['term']
+                self.doc_counts[term] = record['documents_count']  # Store the documents count for the term.
+                # Load the term inverted index record with the matching doc_id's, and frequency in the document.
+                self.term_to_doc_id_and_frequencies[term] = record['index']
+
+    def write(self):
+        with open(self.file_path, 'w') as fp:
+            # Write a special record to the first line that stores the number of documents in the index.
+            metadata = {'number_of_documents': self.num_documents}
+            fp.write(json.dumps(metadata) + '\n')
+
+            # For each unique term across all documents, create a json record with the term,
+            # the number of documents it occurs in, and the inverted index with matching doc_ids
+            # and the term frequency in the document. Finally, write this json record to a
+            # new line in the file.
+            for term, doc_count in self.doc_counts.items():
+                record = {
+                    'term': term,
+                    'documents_count': doc_count,
+                    'index': self.term_to_doc_id_and_frequencies[term]
+                }
+                fp.write(json.dumps(record) + '\n')
