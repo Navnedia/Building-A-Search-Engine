@@ -137,13 +137,14 @@ class ListBasedInvertedIndexWithFrequencies(Index):
         """
         Index that is the final output of the Indexing Process and the main source for Query Process.
 
-        A list based implementation of invert Index including ordering results by frequency.
+        A list based implementation of invert Index including ordering results by TF-IDF.
 
         :param file_path: The string path and name of the JSONL file to read and write the index to.
         """
         self.file_path = file_path
         self.num_documents = 0  # Number of documents in the index.
-        # dict mapping a term to a list of pairs (doc_id, term_frequency).
+        # Inverted index dict mapping a term to a list of pairs (doc_id, term_frequency).
+        # Ex: {'word1': [('f8dhg68', 0.013), ('ukj7sy6', 0.02), ('we34rh0', 0.01)], 'word2':  [('mk2gr52', 0.003)]}
         self.term_to_doc_id_and_frequencies = defaultdict(list)
         self.doc_counts = Counter()  # The number of documents each term occurs in.
 
@@ -152,7 +153,7 @@ class ListBasedInvertedIndexWithFrequencies(Index):
         term_counts = Counter(doc.tokens)  # Number of term occurrences for this document.
         for term, count in term_counts.items():  # For each unique term in the document:
             self.doc_counts[term] += 1
-            # Add this documents id and term frequency to the terms inverted index entry.
+            # Add this doc_id and term frequency to the current terms inverted index entry.
             self.term_to_doc_id_and_frequencies[term].append(
                 (doc.doc_id, term_frequency(count, len(doc.tokens))))
 
@@ -176,7 +177,7 @@ class ListBasedInvertedIndexWithFrequencies(Index):
         # Remove any documents that don't match all the query words.
         match_scores = {doc_id: score for doc_id, score in match_scores.items()
                         if match_counts[doc_id] == len(query.terms)}
-        # Return SearchResults ordered by the TF-IDF score.
+        # Return SearchResults ordered by the TF-IDF total query score.
         return SearchResults(sorted(match_scores.keys(), key=match_scores.get))
 
     def read(self):
@@ -191,7 +192,7 @@ class ListBasedInvertedIndexWithFrequencies(Index):
                 record = json.loads(line)
                 term = record['term']
                 self.doc_counts[term] = record['documents_count']  # Store the documents count for the term.
-                # Load the inverted index records with the term doc_id's, and frequency in the document:
+                # Load the term inverted index record with the matching doc_id's, and frequency in the document:
                 # Convert to a list of pairs.
                 self.term_to_doc_id_and_frequencies[term] = [
                     (index_record['doc_id'], index_record['tf']) for index_record in record['index']]
@@ -203,7 +204,7 @@ class ListBasedInvertedIndexWithFrequencies(Index):
             fp.write(json.dumps(metadata) + '\n')
 
             # For each unique term across all documents, create a json record with the term,
-            # the number of documents it occurs in, and the inverted index with doc_ids
+            # the number of documents it occurs in, and the inverted index with matching doc_ids
             # and the term frequency in the document. Finally, write this json record to a
             # new line in the file.
             for term, doc_count in self.doc_counts.items():
