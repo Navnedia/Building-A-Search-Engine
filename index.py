@@ -99,7 +99,7 @@ class NaiveIndex(Index):
 class NaiveIndexer(Indexer):
     def __init__(self, file_path: str):
         """
-        A Factory class for NaiveIndex
+        A Factory class for NaiveIndex.
 
         :param file_path: The string path and name of the JSON file for indexes to read and write to.
         """
@@ -217,6 +217,19 @@ class ListBasedInvertedIndexWithFrequencies(Index):
                 fp.write(json.dumps(record) + '\n')
 
 
+class ListInvertedIndexer(Indexer):
+    def __init__(self, file_path: str):
+        """
+        A Factory class for ListBasedInvertedIndexWithFrequencies.
+
+        :param file_path: The string path and name of the JSONL file for indexes to read and write to.
+        """
+        self.file_path = file_path
+
+    def create_index(self) -> Index:
+        return ListBasedInvertedIndexWithFrequencies(self.file_path)
+
+
 class DictBasedInvertedIndexWithFrequencies(Index):
     def __init__(self, file_path: str):
         """
@@ -292,3 +305,16 @@ class DictBasedInvertedIndexWithFrequencies(Index):
                     'index': self.term_to_doc_id_and_frequencies[term]
                 }
                 fp.write(json.dumps(record) + '\n')
+
+
+class DictInvertedIndexer(Indexer):
+    def __init__(self, file_path: str):
+        """
+        A Factory class for DictBasedInvertedIndexWithFrequencies.
+
+        :param file_path: The string path and name of the JSONL file for indexes to read and write to.
+        """
+        self.file_path = file_path
+
+    def create_index(self) -> Index:
+        return DictBasedInvertedIndexWithFrequencies(self.file_path)
