@@ -3,7 +3,7 @@ import sys
 from abc import ABC
 
 from search_api import Query, SearchResults
-from index import Index, NaiveIndex
+from index import Index, DictBasedInvertedIndexWithFrequencies
 from tokenizer import Tokenizer, NaiveTokenizer
 
 
@@ -112,7 +112,7 @@ def main(index_filename: str) -> None:
     :param index_filename: The filename and path to read indexed data from.
     :return:
     """
-    index = NaiveIndex(index_filename)
+    index = DictBasedInvertedIndexWithFrequencies(index_filename)
     index.read()  # Load indexed data from the file into memory.
     # Initialize the QueryProcess using naive components:
     process = QueryProcess(
