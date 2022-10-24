@@ -1,3 +1,7 @@
+# Ignore inputs & sample outputs data folder
+trec-covid/
+wiki_small_sample_outputs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
