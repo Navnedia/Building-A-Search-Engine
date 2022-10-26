@@ -258,10 +258,15 @@ class DictBasedInvertedIndexWithFrequencies(Index):
     def search(self, query: Query) -> SearchResults:
         # Get only the doc_ids that match ALL the terms in the query. Intersection of the
         # keys in the dictionary of each term.
-        matches_all_terms = set.intersection(
-            *[set(self.term_to_doc_id_and_frequencies[term].keys()) for term in query.terms])
-        if len(matches_all_terms) == 0:  # If no documents include all the terms, then return an empty result.
-            return SearchResults([])
+        matches_all_terms = None
+        for term in query.terms:
+            # Results must include every term, so if not, then return an empty result early.
+            if term not in self.term_to_doc_id_and_frequencies:
+                return SearchResults([])
+            if not matches_all_terms:  # If the set is empty (a.k.a. for the first term).
+                matches_all_terms = self.term_to_doc_id_and_frequencies[term].keys()
+            else:
+                matches_all_terms &= self.term_to_doc_id_and_frequencies[term].keys()
 
         # Calculate the total query match score for each matching document:
         match_scores = defaultdict(float)
