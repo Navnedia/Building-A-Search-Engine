@@ -36,12 +36,12 @@ class DefaultIndexingProcess:
         return index
 
 
-def create_naive_indexing_process(indexer_file: str) -> DefaultIndexingProcess:
+def create_naive_indexing_process(index_file: str) -> DefaultIndexingProcess:
     """
     Creates an instance of DefaultIndexingProcess by incorporating the naive indexing components
     (i.e, NaiveTokenizer, NaiveSearchDocumentTransformer, NaiveIndex).
 
-    :param indexer_file: The JSON file name and path to write the index to.
+    :param index_file: The JSON file name and path to write the index to.
     :return: An instance of the DefaultIndexingProcess.
     """
     # Construct a naive document transformer using the naive tokenizer.
@@ -49,7 +49,7 @@ def create_naive_indexing_process(indexer_file: str) -> DefaultIndexingProcess:
     # Return an indexing process using the naive components above.
     return DefaultIndexingProcess(
         document_transformer=NaiveSearchDocumentTransformer(NaiveTokenizer()),
-        indexer=NaiveIndexer(indexer_file))
+        indexer=NaiveIndexer(index_file))
 
 
 def run_naive_indexing_process(input_file: str, output_file: str) -> None:
@@ -66,18 +66,18 @@ def run_naive_indexing_process(input_file: str, output_file: str) -> None:
     index.write()  # Write the indexed/Transformed data to the output file.
 
 
-def create_inverted_indexing_process(indexer_file: str) -> DefaultIndexingProcess:
+def create_inverted_indexing_process(index_file: str) -> DefaultIndexingProcess:
     """
     Creates an instance of DefaultIndexingProcess using inverted index with TF-IDF.
     Uses DictBasedInvertedIndexWithFrequencies to build index.
 
-    :param indexer_file: The JSONL file name and path to write the index to.
+    :param index_file: The JSONL file name and path to write the index to.
     :return: An instance of the DefaultIndexingProcess.
     """
     # Construct the indexing process using our dictionary inverted index with TF-IDF.
     return DefaultIndexingProcess(
         document_transformer=NaiveSearchDocumentTransformer(NaiveTokenizer()),
-        indexer=DictInvertedIndexer(indexer_file))
+        indexer=DictInvertedIndexer(index_file))
 
 
 def run_covid_inverted_indexing_process(input_file: str, output_file: str) -> None:
