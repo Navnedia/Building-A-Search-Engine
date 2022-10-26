@@ -48,9 +48,9 @@ class WikiJsonDocumentSource(DocumentSource):
 class TrecCovidJsonlSource(DocumentSource):
     def __init__(self, file_path: str):
         """
-        A DocumentSource implementation that uses JSONL files formatted like corpus.jsonl
-        with a json record on each line of the file. This JSONL file is read in, and the
-        data is used build a collection of documents.
+        A DocumentSource implementation that uses JSONL files formatted like the trec
+        covid corpus.jsonl with a json record on each line of the file. This JSONL file
+        is read in, and the data is used build a collection of documents.
 
         :param file_path: The string path and name of the JSONL file.
         """
