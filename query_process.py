@@ -3,7 +3,7 @@ import sys
 from abc import ABC
 
 from search_api import Query, SearchResults
-from index import Index, DictBasedInvertedIndexWithFrequencies
+from index import Index, DictBasedInvertedIndexWithFrequencies, ListBasedInvertedIndexWithFrequencies
 from tokenizer import Tokenizer, NaiveTokenizer
 
 
@@ -14,11 +14,12 @@ class QueryParser(ABC):
     """
 
     @abc.abstractmethod
-    def process_query(self, query_str: str) -> Query:
+    def process_query(self, query_str: str, num_results: int) -> Query:
         """
         Runs the QueryParser logic.
 
         :param query_str: The input query string entered by the user.
+        :param num_results: The max number of results requested for this search.
         :return: Structured Query representation to be used by search.
         """
         pass
@@ -52,14 +53,15 @@ class NaiveQueryParser(QueryParser):
         """
         self.tokenizer = tokenizer
 
-    def process_query(self, query_str: str) -> Query:
+    def process_query(self, query_str: str, num_results: int) -> Query:
         """
         Runs the tokenizer and wraps the output into a Query dataclass.
 
         :param query_str: The input query string entered by the user.
+        :param num_results: The max number of results requested for this search.
         :return: Query representation with tokenized query.
         """
-        return Query(terms=self.tokenizer.tokenize(query_str))
+        return Query(terms=self.tokenizer.tokenize(query_str), num_results=num_results)
 
 
 class NaiveResultFormatter(ResultFormatter):
@@ -89,36 +91,65 @@ class QueryProcess:
         self.index = index
         self.result_formatter = result_formatter
 
-    def run(self, query_string: str) -> str:
+    def run(self, query_string: str, num_results: int = 10) -> str:
         """
         Runs the query process and format results for display using the components
         specified in the constructor.
 
         :param query_string: The query string taken from the user.
+        :param num_results: The max number of results requested for this search.
         :return: A human-readable representation of search results displayed to the user.
         """
-        query: Query = self.query_parser.process_query(query_string)  # Process the query into tokens.
+        # Parse query and get the Query object representation.
+        query: Query = self.query_parser.process_query(query_string, num_results)
         results: SearchResults = self.index.search(query)  # Search the index for the query.
         output_str: str = self.result_formatter.format_results_for_display(results)  # format results.
 
         return output_str
 
 
-def main(index_filename: str) -> None:
+def create_naive_query_process(index_file: str) -> QueryProcess:
     """
-    Reads the index data from the provided file and runs an interactive search query
-    loop inside the console.
+    Loads the index into memory & initializes the QueryProcess using naive components.
 
-    :param index_filename: The filename and path to read indexed data from.
-    :return:
+    :param index_file: The filename and path to read index data from.
+    :return: An instance of QueryProcess using naive components.
     """
-    index = DictBasedInvertedIndexWithFrequencies(index_filename)
+    index = ListBasedInvertedIndexWithFrequencies(index_file)
     index.read()  # Load indexed data from the file into memory.
     # Initialize the QueryProcess using naive components:
-    process = QueryProcess(
+    return QueryProcess(
         query_parser=NaiveQueryParser(NaiveTokenizer()),
         index=index,
         result_formatter=NaiveResultFormatter())
+
+
+def create_query_process(index_file: str) -> QueryProcess:
+    """
+    Loads the index into memory & initializes the QueryProcess.
+
+    :param index_file: The filename and path to read index data from.
+    :return: An instance of QueryProcess using naive components.
+    """
+    index = DictBasedInvertedIndexWithFrequencies(index_file)
+    index.read()  # Load indexed data from the file into memory.
+    # Initialize the QueryProcess using naive components:
+    return QueryProcess(
+        query_parser=NaiveQueryParser(NaiveTokenizer()),
+        index=index,
+        result_formatter=NaiveResultFormatter())
+
+
+def main(index_file: str) -> None:
+    """
+    Loads query process with index file and runs an interactive search query
+    loop inside the console.
+
+    :param index_file: The filename and path to read index data from.
+    :return:
+    """
+    # Initialize the query process and load in data.
+    process = create_query_process(index_file)
 
     # Continuously prompt user for a query and display the results:
     query = input("Please enter a query:")
@@ -128,4 +159,4 @@ def main(index_filename: str) -> None:
 
 
 if __name__ == "__main__":
-    main(index_filename=sys.argv[1])
+    main(index_file=sys.argv[1])

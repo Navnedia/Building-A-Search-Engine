@@ -5,6 +5,7 @@ from typing import List
 @dataclasses.dataclass
 class Query:
     terms: List[str]
+    num_results: int
 
 
 @dataclasses.dataclass

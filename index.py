@@ -77,10 +77,14 @@ class NaiveIndex(Index):
 
     def search(self, query: Query) -> SearchResults:
         query_terms = set(query.terms)  # Convert query terms to a set, so we can use set operations like subset.
-        # Check for the query terms in each indexed document; record the doc_id if yes:
-        # Return results with the SearchResults dataclass.
-        return SearchResults(
-            result_doc_ids=[document.doc_id for document in self.docs if query_terms.issubset(document.tokens)])
+        matching_ids = []
+        # Check for ALL the query terms in each indexed document; record the doc_id if it matches:
+        for document in self.docs:
+            if query_terms.issubset(document.tokens):
+                matching_ids.append(document.doc_id)
+            if len(matching_ids) == query.num_results:
+                break
+        return SearchResults(result_doc_ids=matching_ids)
 
     def read(self):
         with open(self.file_path, 'r') as fp:  # Open the index file and read in data:
@@ -177,8 +181,9 @@ class ListBasedInvertedIndexWithFrequencies(Index):
         # Remove any documents that don't match all the query words.
         match_scores = {doc_id: score for doc_id, score in match_scores.items()
                         if match_counts[doc_id] == len(query.terms)}
-        # Return SearchResults ordered by the TF-IDF total query score.
-        return SearchResults(sorted(match_scores.keys(), key=match_scores.get))
+        # Return the correct number of SearchResults ordered by the TF-IDF total query score.
+        sorted_results = sorted(match_scores.keys(), key=match_scores.get)
+        return SearchResults(sorted_results[:query.num_results])
 
     def read(self):
         with open(self.file_path, 'r') as fp:
@@ -275,8 +280,9 @@ class DictBasedInvertedIndexWithFrequencies(Index):
             # Calculate the TF-IDF for each matching document, and add it to the document query score.
             for doc_id in matches_all_terms:
                 match_scores[doc_id] += self.term_to_doc_id_and_frequencies[term][doc_id] * idf
-        # Return SearchResults ordered by the TF-IDF total query score.
-        return SearchResults(sorted(match_scores.keys(), key=match_scores.get))
+            # Return the correct number of SearchResults ordered by the TF-IDF total query score.
+            sorted_results = sorted(match_scores.keys(), key=match_scores.get)
+            return SearchResults(sorted_results[:query.num_results])
 
     def read(self):
         with open(self.file_path, 'r') as fp:
