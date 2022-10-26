@@ -40,7 +40,8 @@ class WikiJsonDocumentSource(DocumentSource):
         # add it to the document collection.
         doc_collection = DictDocumentCollection()  # Create the new document collection.
         for record in data:
-            doc_collection.insert(InputDocument(doc_id=record['id'], text=record['init_text']))
+            doc_collection.insert(
+                InputDocument(doc_id=record['id'], text=record['init_text'], title=record['title']))
 
         return doc_collection
 
@@ -62,6 +63,7 @@ class TrecCovidJsonlSource(DocumentSource):
             # For each line of the file, parse the line as json, and add the record to the collection:
             for line in fp:
                 record = json.loads(line)
-                doc_collection.insert(InputDocument(doc_id=record['_id'], text=record['text']))
+                doc_collection.insert(
+                    InputDocument(doc_id=record['_id'], text=record['text'], title=record['title']))
 
         return doc_collection

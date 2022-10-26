@@ -13,6 +13,7 @@ class InputDocument:
     """
     doc_id: str
     text: str
+    title: str
 
 
 @dataclasses.dataclass

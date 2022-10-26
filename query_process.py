@@ -2,6 +2,8 @@ import abc
 import sys
 from abc import ABC
 
+from document_source import TrecCovidJsonlSource
+from documents import DocumentCollection
 from search_api import Query, SearchResults
 from index import Index, DictBasedInvertedIndexWithFrequencies, ListBasedInvertedIndexWithFrequencies
 from tokenizer import Tokenizer, NaiveTokenizer
@@ -73,6 +75,25 @@ class NaiveResultFormatter(ResultFormatter):
         return repr(results)
 
 
+class OutputTitlesResultFormatter(ResultFormatter):
+    def __init__(self, doc_collection: DocumentCollection):
+        """
+        Formate results for display. Load with document collection, so it can get
+        the title data of the document results.
+
+        :param doc_collection: An instance of DocumentCollection with the appropriate documents.
+        """
+        self.doc_collection = doc_collection
+
+    def format_results_for_display(self, results: SearchResults) -> str:
+        output = ''
+        for doc_id in results.result_doc_ids:
+            document = self.doc_collection.get_doc(doc_id)
+            output += f'({doc_id}) = {document.title}\n'
+
+        return output
+
+
 class QueryProcess:
     """
     Class responsible for running the whole query process.
@@ -124,32 +145,37 @@ def create_naive_query_process(index_file: str) -> QueryProcess:
         result_formatter=NaiveResultFormatter())
 
 
-def create_query_process(index_file: str) -> QueryProcess:
+def create_query_process(index_file: str, corpus_file: str) -> QueryProcess:
     """
     Loads the index into memory & initializes the QueryProcess.
 
     :param index_file: The filename and path to read index data from.
+    :param corpus_file: The filename and path to load into a document collection.
     :return: An instance of QueryProcess using naive components.
     """
     index = DictBasedInvertedIndexWithFrequencies(index_file)
     index.read()  # Load indexed data from the file into memory.
+    # Load in documents to document collection to use in the result formatter:
+    source = TrecCovidJsonlSource(corpus_file)
+    doc_collection = source.read()
     # Initialize the QueryProcess using naive components:
     return QueryProcess(
         query_parser=NaiveQueryParser(NaiveTokenizer()),
         index=index,
-        result_formatter=NaiveResultFormatter())
+        result_formatter=OutputTitlesResultFormatter(doc_collection))
 
 
-def main(index_file: str) -> None:
+def main(index_file: str, corpus_file: str) -> None:
     """
     Loads query process with index file and runs an interactive search query
     loop inside the console.
 
     :param index_file: The filename and path to read index data from.
+    :param corpus_file: The filename and path to load into a document collection.
     :return:
     """
     # Initialize the query process and load in data.
-    process = create_query_process(index_file)
+    process = create_query_process(index_file, corpus_file)
 
     # Continuously prompt user for a query and display the results:
     query = input("Please enter a query:")
@@ -159,4 +185,4 @@ def main(index_file: str) -> None:
 
 
 if __name__ == "__main__":
-    main(index_file=sys.argv[1])
+    main(index_file=sys.argv[1], corpus_file=sys.argv[2])
