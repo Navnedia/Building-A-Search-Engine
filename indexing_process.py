@@ -61,7 +61,7 @@ def run_naive_indexing_process(input_file: str, output_file: str) -> None:
     :return: None
     """
     naive_ip = create_naive_indexing_process(output_file)  # Build an indexing process using naive components.
-    # Run indexing process on wiki json source to build the index.
+    # Run indexing process on wiki json source collection to build the index.
     index = naive_ip.run(WikiJsonDocumentSource(input_file))
     index.write()  # Write the indexed/Transformed data to the output file.
 
@@ -91,6 +91,6 @@ def run_covid_inverted_indexing_process(input_file: str, output_file: str) -> No
     """
     # Build an indexing process using TF-IDF inverted index components.
     inverted_ip = create_inverted_indexing_process(output_file)
-    # Run indexing process on covid jsonl source to build the index.
+    # Run indexing process on covid jsonl source collection to build the index.
     index = inverted_ip.run(TrecCovidJsonlSource(input_file))
     index.write()  # Write the index data to the output file.
