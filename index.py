@@ -265,8 +265,9 @@ class DictBasedInvertedIndexWithFrequencies(Index):
         # keys in the dictionary of each term.
         matches_all_terms = None
         for term in query.terms:
-            # Results must include every term, so if not, then return an empty result early.
-            if term not in self.term_to_doc_id_and_frequencies:
+            # Results must include every term, so if no documents match all the terms, or if
+            # the term isn't in the index, then return an empty result early.
+            if term not in self.term_to_doc_id_and_frequencies or matches_all_terms == set():
                 return SearchResults([])
             if not matches_all_terms:  # If the set is empty (a.k.a. for the first term).
                 matches_all_terms = self.term_to_doc_id_and_frequencies[term].keys()
