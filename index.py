@@ -182,7 +182,7 @@ class ListBasedInvertedIndexWithFrequencies(Index):
         match_scores = {doc_id: score for doc_id, score in match_scores.items()
                         if match_counts[doc_id] == len(query.terms)}
         # Return the correct number of SearchResults ordered by the TF-IDF total query score.
-        sorted_results = sorted(match_scores.keys(), key=match_scores.get)
+        sorted_results = sorted(match_scores.keys(), key=match_scores.get, reverse=True)
         return SearchResults(sorted_results[:query.num_results])
 
     def read(self):
@@ -282,7 +282,7 @@ class DictBasedInvertedIndexWithFrequencies(Index):
             for doc_id in matches_all_terms:
                 match_scores[doc_id] += self.term_to_doc_id_and_frequencies[term][doc_id] * idf
             # Return the correct number of SearchResults ordered by the TF-IDF total query score.
-            sorted_results = sorted(match_scores.keys(), key=match_scores.get)
+            sorted_results = sorted(match_scores.keys(), key=match_scores.get, reverse=True)
             return SearchResults(sorted_results[:query.num_results])
 
     def read(self):
