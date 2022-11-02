@@ -129,14 +129,32 @@ class QueryProcess:
         return output_str
 
 
-def create_naive_query_process(index_file: str) -> QueryProcess:
+def create_naive_list_query_process(index_file: str) -> QueryProcess:
     """
-    Loads the index into memory & initializes the QueryProcess using naive components.
+    Loads the index into memory & initializes the QueryProcess using naive query components
+    and list based index.
 
     :param index_file: The filename and path to read index data from.
     :return: An instance of QueryProcess using naive components.
     """
     index = ListBasedInvertedIndexWithFrequencies(index_file)
+    index.read()  # Load indexed data from the file into memory.
+    # Initialize the QueryProcess using naive components:
+    return QueryProcess(
+        query_parser=NaiveQueryParser(NaiveTokenizer()),
+        index=index,
+        result_formatter=NaiveResultFormatter())
+
+
+def create_naive_dict_query_process(index_file: str) -> QueryProcess:
+    """
+    Loads the index into memory & initializes the QueryProcess using naive query components
+    and the dictionary based index.
+
+    :param index_file: The filename and path to read index data from.
+    :return: An instance of QueryProcess using naive components.
+    """
+    index = DictBasedInvertedIndexWithFrequencies(index_file)
     index.read()  # Load indexed data from the file into memory.
     # Initialize the QueryProcess using naive components:
     return QueryProcess(

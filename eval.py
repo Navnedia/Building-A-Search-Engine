@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from typing import List, Dict
-from query_process import QueryProcess
+from query_process import QueryProcess, create_naive_dict_query_process
 from search_api import SearchResults, Query
 
 
@@ -103,3 +103,21 @@ def score_by_sum_of_eval_values(annotated_results: List[EvalEntry]) -> int:
     :return: The total results evaluation score.
     """
     return sum([entry.eval_value for entry in annotated_results])
+
+
+def run_results_evaluation(index_file: str, queries_file: str, tests_file: str, num_results: int = 100) -> int:
+    """
+    A function to run the whole results evaluation process in one.
+
+    :param index_file: The filename and path to read index data from.
+    :param queries_file: The filename and path to the jsonl file with queries.
+    :param tests_file: The filename and path containing the ratings in tsv format.
+    :param num_results: The max number of results requested for each test query. Default is 100.
+    :return: The total results evaluation score.
+    """
+    qp: QueryProcess = create_naive_dict_query_process(index_file)  # Create a query process.
+    search_results = run_queries(queries_file, qp, num_results)  # Run the test queries through our search implementation.
+    document_relevance_values = read_tests(tests_file)  # Get the human evaluated document relevancy scores for each query.
+    annotated_results = annotate_results(search_results, document_relevance_values)  # Compare the human evaluations to search results.
+
+    return score_by_sum_of_eval_values(annotated_results)  # Return the sum of result evaluation scores.
