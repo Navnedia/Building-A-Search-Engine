@@ -24,7 +24,7 @@ def read_queries(queries_file: str) -> Dict[int, str]:
         # Add each query_id & it's associated query string to the dictionary:
         for line in fp:
             record = json.loads(line)
-            query_id = record['_id']
+            query_id = int(record['_id'])
             query_text = record['metadata']['query']
             query_id_to_query[query_id] = query_text
 
