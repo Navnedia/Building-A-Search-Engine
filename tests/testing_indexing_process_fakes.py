@@ -10,7 +10,7 @@ class FakeDocumentCollection(DocumentCollection):
 
     @classmethod
     def from_str_list(cls, docs: List[str]):
-        return cls([InputDocument(doc_id=str(i), text=doc) for i, doc in enumerate(docs)])
+        return cls([InputDocument(doc_id=str(i), title='', text=doc) for i, doc in enumerate(docs)])
 
     def insert(self, doc: InputDocument) -> None:
         self.docs.append(doc)

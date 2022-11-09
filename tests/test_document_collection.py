@@ -7,14 +7,18 @@ from unittest import TestCase
 
 class TestDictDocumentCollection(TestCase):
     def test_get_doc(self):
-        test_docs = [InputDocument('0', 'd1'), InputDocument('1', 'd2'), InputDocument('2', 'd3')]
+        test_docs = [InputDocument(doc_id='0', title='', text='d1'),
+                     InputDocument(doc_id='1', title='', text='d2'),
+                     InputDocument(doc_id='2', title='', text='d3')]
         dict_collection = DictDocumentCollection()
         for doc in test_docs:  # Insert and check for test documents:
             dict_collection.insert(doc)
             self.assertEqual(dict_collection.get_doc(doc.doc_id), doc)
 
     def test_get_batch(self):
-        test_docs = [InputDocument('0', 'd1'), InputDocument('1', 'd2'), InputDocument('2', 'd3')]
+        test_docs = [InputDocument(doc_id='0', title='', text='d1'),
+                     InputDocument(doc_id='1', title='', text='d2'),
+                     InputDocument(doc_id='2', title='', text='d3')]
         dict_collection = DictDocumentCollection()
         for doc in test_docs:  # Insert test documents:
             dict_collection.insert(doc)
@@ -23,8 +27,8 @@ class TestDictDocumentCollection(TestCase):
         self.assertIsInstance(sub_collection, DictDocumentCollection)  # Test the return type is another document collection.
         # Make sure only the correct documents are in the collection:
         self.assertEqual(sub_collection.documents, {
-            '0': InputDocument('0', 'd1'),
-            '2': InputDocument('2', 'd3')})
+            '0': InputDocument(doc_id='0', title='', text='d1'),
+            '2': InputDocument(doc_id='2', title='', text='d3')})
 
     def test_invalid(self):
         dict_collection = DictDocumentCollection()
@@ -35,8 +39,8 @@ class TestDictDocumentCollection(TestCase):
 
     def test_iterator(self):
         dict_collection = DictDocumentCollection()
-        dict_collection.insert(InputDocument('0', 'd1'))
-        dict_collection.insert(InputDocument('1', 'd2'))
+        dict_collection.insert(InputDocument(doc_id='0', title='', text='d1'))
+        dict_collection.insert(InputDocument(doc_id='1', title='', text='d2'))
         dict_collection.insert(None)
 
         collection_iter = dict_collection.__iter__()  # Get iterator.
