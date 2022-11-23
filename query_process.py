@@ -1,9 +1,11 @@
 import abc
 import sys
 from abc import ABC
+from collections import defaultdict
 
 from document_source import TrecCovidJsonlSource
 from documents import DocumentCollection
+from query_expansion import QueryExpander, JsonlThesaurusTermAlternativesSource
 from search_api import Query, SearchResults
 from index import Index, DictBasedInvertedIndexWithFrequencies, ListBasedInvertedIndexWithFrequencies
 from tokenizer import Tokenizer, NaiveTokenizer
@@ -45,12 +47,10 @@ class ResultFormatter(ABC):
 
 
 class NaiveQueryParser(QueryParser):
-    """
-    A QueryProcessor implementation that runs the supplied Tokenizer.
-    """
-
     def __init__(self, tokenizer: Tokenizer):
         """
+        A QueryProcessor implementation that runs the supplied Tokenizer.
+
         :param tokenizer: A Tokenizer instance that will be used in parse_query.
         """
         self.tokenizer = tokenizer
@@ -63,7 +63,26 @@ class NaiveQueryParser(QueryParser):
         :param num_results: The max number of results requested for this search.
         :return: Query representation with tokenized query.
         """
-        return Query(terms=self.tokenizer.tokenize(query_str), num_results=num_results)
+        return Query(terms=self.tokenizer.tokenize(query_str), alternatives=defaultdict(list), num_results=num_results)
+
+
+class ExpandedQueryParser(QueryParser):
+    def __init__(self, tokenizer: Tokenizer, query_expander: QueryExpander):
+        """
+        A QueryProcessor implementation that tokenizes the query, and injects alternative
+        terms into the query with query expansion.
+
+        :param tokenizer: A Tokenizer instance that will be used in parse_query.
+        :param query_expander: A QueryExpander instance to get alternative terms.
+        """
+        self.tokenizer = tokenizer
+        self.query_expander = query_expander
+
+    def process_query(self, query_str: str, num_results: int) -> Query:
+        terms = self.tokenizer.tokenize(query_str)  # Tokenize the query with the supplied tokenizer.
+        alternatives = self.query_expander.process_query(terms)  # Run the query expander on terms to get alternative.
+
+        return Query(terms=terms, alternatives=alternatives, num_results=num_results)
 
 
 class NaiveResultFormatter(ResultFormatter):
@@ -101,7 +120,7 @@ class QueryProcess:
 
     def __init__(self, query_parser: QueryParser, index: Index, result_formatter: ResultFormatter):
         """
-        Constructor taking all the necessary components to process queries.
+        QueryProcess constructor taking all the necessary components to process queries.
 
         :param query_parser: Specific implementation instance of a QueryParser.
         :param index: Specific implementation instance of an Index with all the data necessary
@@ -163,6 +182,26 @@ def create_naive_dict_query_process(index_file: str) -> QueryProcess:
         result_formatter=NaiveResultFormatter())
 
 
+def create_expanded_query_process(index_file: str, alternatives_file: str) -> QueryProcess:
+    """
+    Loads the index into memory & initializes the QueryProcess using naive query components
+    and list based index.
+
+    :param index_file: The filename and path to read index data from.
+    :param alternatives_file: The filename and path to load alternative terms.
+    :return: An instance of QueryProcess using naive components.
+    """
+    index = DictBasedInvertedIndexWithFrequencies(index_file)
+    index.read()  # Load indexed data from the file into memory.
+    alternatives_source = JsonlThesaurusTermAlternativesSource(alternatives_file)  # Synonyms alternative source.
+    # Initialize the QueryProcess using expander components:
+    # Read in alternatives and initialize the expanded parser.
+    return QueryProcess(
+        query_parser=ExpandedQueryParser(NaiveTokenizer(), alternatives_source.read()),
+        index=index,
+        result_formatter=NaiveResultFormatter())
+
+
 def create_query_process(index_file: str, corpus_file: str) -> QueryProcess:
     """
     Loads the index into memory & initializes the QueryProcess.
@@ -183,17 +222,18 @@ def create_query_process(index_file: str, corpus_file: str) -> QueryProcess:
         result_formatter=OutputTitlesResultFormatter(doc_collection))
 
 
-def main(index_file: str, corpus_file: str) -> None:
+def main(index_file: str, corpus_file: str, alternatives_file: str) -> None:
     """
     Loads query process with index file and runs an interactive search query
     loop inside the console.
 
     :param index_file: The filename and path to read index data from.
     :param corpus_file: The filename and path to load into a document collection.
+    :param alternatives_file: The filename and path to load alternative terms.
     :return:
     """
     # Initialize the query process and load in data.
-    process = create_query_process(index_file, corpus_file)
+    process = create_expanded_query_process(index_file, alternatives_file)
 
     # Continuously prompt user for a query and display the results:
     query = input("Please enter a query:")
