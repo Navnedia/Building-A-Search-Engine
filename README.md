@@ -1,6 +1,6 @@
 # Building a Search Engine
 
-> **Warning** work in Progress!
+> **Warning** work in progress!
 
 A basic search engine that helps you index a courpus to search and rank the document data set. Built using Python and object-oriented programming principals to make the project extendable and maintainable.
 
