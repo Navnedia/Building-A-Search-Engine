@@ -8,6 +8,7 @@ A basic search engine that helps you index a courpus to search and rank the docu
 - **Inverted Index** - to improve search times.
 - **Results Ranking** - with term frequency–inverse document frequency (TF-IDF) to order results by relvance.
 - **Query Expansion** - to automatically add additional query terms (like sysnonyms) to improve results relevancy.
+- **Result Evaluation** - test and compare results with human evaluated relevancy scores to gauge performance.
 
 This started out as a course project, and I'm currently working on building this out further and adding more feature to it.
 I'm planning to build out a front end web interface so I can demo this project better. I will also be adding additional 
