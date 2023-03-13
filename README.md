@@ -7,7 +7,7 @@ A basic search engine that helps you index a corpus to search and rank the docum
 **Features:**
 - **Inverted Index** - to improve search times.
 - **Results Ranking** - with term frequency–inverse document frequency (TF-IDF) to order results by relevance.
-- **Query Expansion** - to automatically add additional query terms (like synonyms) to improve results relevancy **([see my testing analysis](https://docs.google.com/document/d/1N2MKWVXAzkRehzV31ugEjfnJod2w0K8gdfzscSBIvFY/edit?usp=sharing))**.
+- **Query Expansion** - to automatically add additional query terms (like synonyms) to improve results relevancy **([see my testing report](Query-Expansion-Analysis.md))**.
 - **Result Evaluation** - test and compare results with human-evaluated  relevancy scores to gauge performance.
 
 This started out as a course project, and I'm currently working on building this out further and adding more features to it.
