@@ -15,6 +15,7 @@ I'm planning to build out a front-end web interface so I can demo this project b
 functionality to build on the project.
 
 **ToDo:**
+- [ ] Spit up files and organize into packages. 
 - [ ] Write Documentation!
 - [ ] Finish implementing stop words functionality.
 - [ ] Build a frontend web interface to the demo project.
