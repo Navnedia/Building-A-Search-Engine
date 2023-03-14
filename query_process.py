@@ -165,6 +165,26 @@ def create_naive_list_query_process(index_file: str) -> QueryProcess:
         result_formatter=NaiveResultFormatter())
 
 
+def create_expanded_list_query_process(index_file: str, alternatives_file: str) -> QueryProcess:
+    """
+    Loads the index into memory & initializes the QueryProcess with expanded query components
+    and list based index.
+
+    :param index_file: The filename and path to read index data from.
+    :param alternatives_file: The filename and path to load alternative terms.
+    :return: An instance of QueryProcess using naive components.
+    """
+    index = ListBasedInvertedIndexWithFrequencies(index_file)
+    index.read()  # Load indexed data from the file into memory.
+    alternatives_source = JsonlThesaurusTermAlternativesSource(alternatives_file)  # Synonyms alternative source.
+    # Initialize the QueryProcess using expander components:
+    # Read in alternatives and initialize the expanded parser.
+    return QueryProcess(
+        query_parser=ExpandedQueryParser(NaiveTokenizer(), alternatives_source.read()),
+        index=index,
+        result_formatter=NaiveResultFormatter())
+
+
 def create_naive_dict_query_process(index_file: str) -> QueryProcess:
     """
     Loads the index into memory & initializes the QueryProcess using naive query components
@@ -184,8 +204,8 @@ def create_naive_dict_query_process(index_file: str) -> QueryProcess:
 
 def create_expanded_query_process(index_file: str, alternatives_file: str) -> QueryProcess:
     """
-    Loads the index into memory & initializes the QueryProcess using naive query components
-    and list based index.
+    Loads the index into memory & initializes the QueryProcess with expanded query components
+    and dict based index.
 
     :param index_file: The filename and path to read index data from.
     :param alternatives_file: The filename and path to load alternative terms.

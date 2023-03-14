@@ -185,6 +185,54 @@ class ListBasedInvertedIndexWithFrequencies(Index):
         sorted_results = sorted(match_scores.keys(), key=match_scores.get, reverse=True)
         return SearchResults(sorted_results[:query.num_results])
 
+    def search2(self, query: Query) -> SearchResults:
+        """
+        A variant search algorithm with also uses alternatives to finds matching SearchResults by
+        searching through the indexed documents.
+
+        :param query: The structured Query representation with terms as tokens and alternative terms.
+        :return: A structured representation of search results containing the doc_ids.
+        """
+        match_scores = defaultdict(float)  # Total TF-IDF scores for each document matching the terms.
+        match_counts = defaultdict(int)  # Number of query terms each document matched for.
+        for term in query.terms:
+            match_found = set()
+            if term in self.term_to_doc_id_and_frequencies:
+                # Calculate the inverse document frequency for the given term.
+                idf = inverse_document_frequency(self.doc_counts[term], self.num_documents)
+                for doc_id, tf in self.term_to_doc_id_and_frequencies[term]:
+                    # For each document matching the term, increment documents match number, and update
+                    # the term frequency–inverse document frequency (TF-IDF) score of the document.
+                    match_found.add(doc_id)
+                    match_scores[doc_id] += tf * idf
+
+            for alternative in query.alternatives[term]:
+                if alternative not in self.term_to_doc_id_and_frequencies:
+                    continue
+
+                idf = inverse_document_frequency(self.doc_counts[alternative], self.num_documents)
+                for doc_id, tf in self.term_to_doc_id_and_frequencies[alternative]:
+                    # For each document matching the term, increment documents match number, and update
+                    # the term frequency–inverse document frequency (TF-IDF) score of the document.
+                    match_found.add(doc_id)
+                    match_scores[doc_id] += tf * idf
+
+            # If a term is not found anywhere in the index, then we return empty results,
+            # because each query term must be present in the matches.
+            if len(match_found) == 0:
+                # If we want to ignore terms with no matches, we can do continue here to move to the next term.
+                return SearchResults([])
+
+            for doc_id in match_found:
+                match_counts[doc_id] += 1
+
+        # Remove any documents that don't match all the query words.
+        match_scores = {doc_id: score for doc_id, score in match_scores.items()
+                        if match_counts[doc_id] == len(query.terms)}
+        # Return the correct number of SearchResults ordered by the TF-IDF total query score.
+        sorted_results = sorted(match_scores.keys(), key=match_scores.get, reverse=True)
+        return SearchResults(sorted_results[:query.num_results])
+
     def read(self):
         with open(self.file_path, 'r') as fp:
             # Read the first line metadata and store the count of documents in the index.
